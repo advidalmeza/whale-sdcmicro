@@ -29,15 +29,18 @@ str(whale_dat)
 
 ### Question 1
 **How many direct identifiers are present in this dataset? What are they?**
-The direct identifiers present in this dataset are the *case_id* attribute for the whale entaglement event and *fishery_license* attribute for the fishing operation.  
+There are 2 direct identifiers present in this dataset. They are the *case_id* attribute for the whale entaglement event and *fishery_license* attribute for the fishing operation.
 
 ### Question 2
 **What attributes would you consider quasi-identifiers? Why?**
-The quasi-identifiers present in this dataset for the fishing operation are the *county*, *state*, *lat*, *long*, and *origin* attributes; these attributes can be coupled and used together to identify a fishery. The quasi-identifiers present in this dataset for the whale entaglement event are the *year*, *month*, *type*, *inj_level*, *condition*, *gear*, *fine*, and *infraction_type* attributes; these attributes can also be coupled and used together to identify a whale entaglement event, especially if the event recvied wide media coverage or foreign data repositories to cross-reference exist. 
+The quasi-identifiers present in this dataset for the fishing operation are the *county*, *state*, *lat*, *long*, and *origin* attributes; these attributes can be coupled and used together to identify a fishery. The quasi-identifiers present in this dataset for the whale entaglement event are the *year*, *month*, *type*, *inj_level*, *condition*, *gear*, *fine*, and *infraction_type* attributes; these attributes can also be coupled and used together to identify a whale entaglement event, especially if the event received wide media coverage or foreign data repositories to cross-reference exist. 
 
 ### Question 3
 **What types of variables are they? Define them as numeric, integer, factor or string.**
-All attributes are factor variables as they are categorical variables.  
+The variables that are numeric: lat, long 
+Numeric variables that are also integer variables: year, month, fishery_license
+Factor variables: inj_level, condition, fine, infraction_type
+Character/string variables: type, county, state, origin, gear
 
 ```{r message = FALSE}
 # Define file name
@@ -185,3 +188,4 @@ for(i in 1:length(namesKeyVars)) {
 
 NAcount
 ```
+
