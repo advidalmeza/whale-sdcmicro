@@ -12,6 +12,7 @@ Your team acquired a dataset\* from researchers working with [whale entanglement
 Please complete this exercise in pairs or groups of three. Each group should download the dataset and complete the rmd file, including the code and answering the questions. Remember to include your names in the YAML.
 
 ## Set Up Environment
+
 ```{r message = FALSE}
 library(here)
 library(tidyverse)
@@ -23,24 +24,30 @@ whale_dat <- read_csv('whale-sdc.csv')
 ```
 
 ## Inspect the Dataset
+
 ```{r echo = FALSE}
 str(whale_dat)
 ```
 
 ### Question 1
-**How many direct identifiers are present in this dataset? What are they?**
-There are 2 direct identifiers present in this dataset. They are the *case_id* attribute for the whale entaglement event and *fishery_license* attribute for the fishing operation.
+
+**How many direct identifiers are present in this dataset? What are they?** There are 2 direct identifiers present in this dataset. They are the *case_id* attribute for the whale entaglement event and *fishery_license* attribute for the fishing operation.
 
 ### Question 2
-**What attributes would you consider quasi-identifiers? Why?**
-The quasi-identifiers present in this dataset for the fishing operation are the *county*, *state*, *lat*, *long*, and *origin* attributes; these attributes can be coupled and used together to identify a fishery. The quasi-identifiers present in this dataset for the whale entaglement event are the *year*, *month*, *type*, *inj_level*, *condition*, *gear*, *fine*, and *infraction_type* attributes; these attributes can also be coupled and used together to identify a whale entaglement event, especially if the event received wide media coverage or foreign data repositories to cross-reference exist. 
+
+**What attributes would you consider quasi-identifiers? Why?** The quasi-identifiers present in this dataset for the fishing operation are the *county*, *state*, *lat*, *long*, and *origin* attributes; these attributes can be coupled and used together to identify a fishery. The quasi-identifiers present in this dataset for the whale entaglement event are the *year*, *month*, *type*, *inj_level*, *condition*, *gear*, *fine*, and *infraction_type* attributes; these attributes can also be coupled and used together to identify a whale entaglement event, especially if the event received wide media coverage or foreign data repositories to cross-reference exist.
 
 ### Question 3
-**What types of variables are they? Define them as numeric, integer, factor or string.**
-The variables that are numeric: lat, long 
-Numeric variables that are also integer variables: year, month, fishery_license
-Factor variables: inj_level, condition, fine, infraction_type
-Character/string variables: type, county, state, origin, gear
+
+**What types of variables are the quasi-identifiers?**
+
+-   The numeric attributes: *lat*, *long*
+
+-   The numeric attributes that are also factor attributes: *year*, *month*
+
+-   The factor attributes: *inj_level*, *condition*, *fine*, *infraction_type, type, origin*, *gear*
+
+-   The character/string attributes that are also factor attributes: *county*, *state*
 
 ```{r message = FALSE}
 # Define file name
@@ -51,19 +58,25 @@ file <- read_csv(fname)
 
 # Convert to factor
 file <- varToFactor(obj = file, 
-                    var = c('year', 'month', 'type', 
-                            'county', 'state', 'lat', 'long',
-                            'inj_level', 'condition', 'origin',
-                            'gear', 'fine', 'infraction_type'))
+                    var = c('type', 'county', 'state', 'inj_level', 
+                            'condition', 'origin',
+                            'gear', 'fine', 'infraction_type',
+                            'year', 'month'))
+
+# Convert to numeric
+file <- varToNumeric(obj = file, 
+                     var = c('lat', 'long'))
 ```
 
 Considering your answers to questions 1, 2 and 3, and let's set up an SDC problem.
+
 ```{r}
 sdcInitial <- createSdcObj(dat = file,
-                           keyVars = c('year', 'month', 'type',
-                                       'county', 'state', 'lat', 'long',
+                           keyVars = c('type', 'county', 'state',
                                        'inj_level', 'condition', 'origin',
-                                       'gear', 'fine', 'infraction_type'),
+                                       'gear', 'fine', 'infraction_type',
+                                       'year', 'month'),
+                           numVars = c('lat', 'long'),
                            weightVar = NULL,
                            hhId = NULL,
                            strataVar = NULL,
@@ -75,34 +88,41 @@ sdcInitial <- createSdcObj(dat = file,
 ```
 
 ### Question 4.1
-**What is the risk of re-identification for this dataset?**
-The risk of re-identification for the entire dataset is 100%. 
+
+**What is the risk of re-identification for this dataset?** The risk of re-identification for the entire dataset is 99.14%.
+
 ```{r}
 sdcInitial@risk$global$risk
 ```
 
 ### Question 4.2
+
 Let's determine which observations have a higher risk to be re-identified:
+
 ```{r}
 head(sdcInitial@risk$individual)
 ```
 
-And let's take a look at the frequency of the particular combination of key variables (quasi-identifiers) for each record in the sample: 
+And let's take a look at the frequency of the particular combination of key variables (quasi-identifiers) for each record in the sample:
+
 ```{r}
 freq(sdcInitial, type = 'fk')
 ```
 
 **To what extent does this dataset violate k-anonymity?**
-All observations of the dataset violate k-anonymity. 
+
+All observations of the dataset violate k-anonymity.
 
 Now, consider techniques that could reduce the risk of re-identification.
 
 ### Question 5.1
+
 **Apply one non-perturbative method to a variable of your choice. How effective was it in lowering the disclosure risk?**
 
-Let's apply top and bottom recoding to de-identify and anonymize the dataset: 
+Let's apply top and bottom recoding to de-identify and anonymize the dataset:
 
 #### Recoding for *year* attribute
+
 ```{r}
 table(sdcInitial@manipKeyVars$year)
 ```
@@ -126,6 +146,7 @@ sdcInitial <- groupAndRename(obj = sdcInitial,
 ```
 
 #### Recoding for *inj_level* attribute
+
 ```{r}
 table(sdcInitial@manipKeyVars$inj_level)
 ```
@@ -150,17 +171,20 @@ sdcInitial <- groupAndRename(obj = sdcInitial,
 sdcInitial@risk$global$risk
 print(sdcInitial, 'kAnon')
 ```
-Top and bottom recoding of the two quasi-identifiers was not effective at lowering the risk of re-identification. The risk of re-identification remains at 100%.  
+
+Top and bottom recoding of the two quasi-identifiers was somewhat effective at lowering the risk of re-identification. The risk of re-identification is now at 89.66%, where all observations violate k-anonymity at 3 and 5, and 98.28% of observations violate k-anonymity at 2.
 
 ### Question 5.2
-**Apply k-3 anonymization to this dataset.**
-After we set the parameters to aim for 3 observations sharing the same attributes in the dataset, the risk of re-identification is now 22.5%. 
+
+**Apply k-3 anonymization to this dataset.** After we set the parameters to aim for 3 observations sharing the same attributes in the dataset, the risk of re-identification is now 19.05%.
+
 ```{r}
 sdcInitial <- kAnon(sdcInitial, k = c(3))
 sdcInitial@risk$global$risk
 ```
 
 ### Question 6
+
 **Compute the information loss for the de-identified version of the dataset.**
 
 ```{r message = FALSE}
@@ -169,6 +193,7 @@ print(sdcInitial, 'ls')
 ```
 
 Let's compare the number of missing values (NAs) before and after anonymization.
+
 ```{r}
 # Extract names of all categorical key variables into a vector
 namesKeyVars <- names(sdcInitial@manipKeyVars)
@@ -188,4 +213,3 @@ for(i in 1:length(namesKeyVars)) {
 
 NAcount
 ```
-
